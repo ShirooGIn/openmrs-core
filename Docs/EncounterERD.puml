@@ -1,0 +1,115 @@
+@startuml
+
+hide circle
+skinparam linetype ortho
+
+title Encounter Domain ER Diagram
+
+' ENTITAS UTAMA
+entity "Encounter" as e {
+  *encounter_id : int <<PK>>
+  --
+  *encounter_datetime : datetime
+  *patient_id : int <<FK>>
+  *location_id : int <<FK>>
+  *encounter_type_id : int <<FK>>
+  *visit_id : int <<FK>>
+  form_id : int <<FK>>
+  --
+  ' Dari BaseChangeableOpenmrsData
+  creator : int
+  date_created : datetime
+  voided : boolean
+  voided_by : int
+  void_reason : varchar
+}
+
+' ENTITAS PENDUKUNG
+entity "Patient" as p {
+  *patient_id : int <<PK>>
+  --
+  gender : varchar
+  birthdate : date
+}
+
+entity "EncounterType" as et {
+  *encounter_type_id : int <<PK>>
+  --
+  *name : varchar
+  description : text
+}
+
+entity "Location" as l {
+  *location_id : int <<PK>>
+  --
+  *name : varchar
+  address1 : varchar
+}
+
+entity "Visit" as v {
+  *visit_id : int <<PK>>
+  --
+  start_datetime : datetime
+  end_datetime : datetime
+  visit_type_id : int
+}
+
+entity "Form" as f {
+  *form_id : int <<PK>>
+  --
+  name : varchar
+  version : varchar
+  build : int
+}
+
+entity "EncounterProvider" as ep {
+  *encounter_provider_id : int <<PK>>
+  --
+  *encounter_id : int <<FK>>
+  *provider_id : int <<FK>>
+  *encounter_role_id : int <<FK>>
+}
+
+entity "Provider" as prov {
+  *provider_id : int <<PK>>
+  --
+  person_id : int
+  identifier : varchar
+}
+
+entity "Obs" as obs {
+  *obs_id : int <<PK>>
+  --
+  *encounter_id : int <<FK>>
+  concept_id : int
+  value_numeric : double
+  value_text : text
+  obs_datetime : datetime
+}
+
+entity "Order" as ord {
+  *order_id : int <<PK>>
+  --
+  *encounter_id : int <<FK>>
+  concept_id : int
+  order_number : varchar
+  action : varchar
+}
+
+' RELASI (HUBUNGAN)
+
+p ||..o{ e : "has"
+et ||..|| e : "defines"
+l ||..|| e : "occurs at"
+v ||..o{ e : "groups"
+f ||..o{ e : "recorded on"
+
+' Hubungan Provider (Many-to-Many)
+e ||..|{ ep : "attended by"
+ep }|..|| prov : "is"
+
+' Data Klinis
+e ||..o{ obs : "contains observations"
+e ||..o{ ord : "contains orders"
+
+@enduml
