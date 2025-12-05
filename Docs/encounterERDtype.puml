@@ -1,0 +1,132 @@
+@startuml
+
+hide circle
+skinparam linetype ortho
+
+title Encounter Domain ER Diagram (Complete)
+
+' --- ENTITAS UTAMA ---
+entity "Encounter" as e {
+  *encounter_id : int <<PK>>
+  --
+  *encounter_datetime : datetime
+  *patient_id : int <<FK>>
+  *location_id : int <<FK>>
+  *encounter_type_id : int <<FK>>
+  *visit_id : int <<FK>>
+  form_id : int <<FK>>
+  --
+  ' Audit Info
+  creator : int
+  date_created : datetime
+  voided : boolean
+  voided_by : int
+  void_reason : varchar
+}
+
+' --- ENTITAS PENDUKUNG ---
+
+entity "EncounterType" as et {
+  *encounter_type_id : int <<PK>>
+  --
+  *name : varchar
+  description : text
+  view_privilege : varchar <<FK>>
+  edit_privilege : varchar <<FK>>
+  --
+  retired : boolean
+}
+
+entity "Patient" as p {
+  *patient_id : int <<PK>>
+  --
+  gender : varchar
+  birthdate : date
+}
+
+entity "Location" as l {
+  *location_id : int <<PK>>
+  --
+  *name : varchar
+  address1 : varchar
+}
+
+entity "Visit" as v {
+  *visit_id : int <<PK>>
+  --
+  start_datetime : datetime
+  end_datetime : datetime
+  visit_type_id : int
+}
+
+entity "Form" as f {
+  *form_id : int <<PK>>
+  --
+  name : varchar
+  version : varchar
+}
+
+entity "Privilege" as priv {
+  *privilege : varchar <<PK>>
+  --
+  description : varchar
+}
+
+' --- TABEL RELASI / ANAK ---
+
+entity "EncounterProvider" as ep {
+  *encounter_provider_id : int <<PK>>
+  --
+  *encounter_id : int <<FK>>
+  *provider_id : int <<FK>>
+  *encounter_role_id : int <<FK>>
+}
+
+entity "Provider" as prov {
+  *provider_id : int <<PK>>
+  --
+  person_id : int
+  identifier : varchar
+}
+
+entity "Obs" as obs {
+  *obs_id : int <<PK>>
+  --
+  *encounter_id : int <<FK>>
+  concept_id : int
+  value_numeric : double
+  value_text : text
+  obs_datetime : datetime
+}
+
+entity "Order" as ord {
+  *order_id : int <<PK>>
+  --
+  *encounter_id : int <<FK>>
+  concept_id : int
+  order_number : varchar
+  action : varchar
+}
+
+' --- HUBUNGAN (RELATIONSHIPS) ---
+
+' Core Relationships
+p ||..o{ e : "has"
+l ||..|| e : "occurs at"
+v ||..o{ e : "groups"
+f ||..o{ e : "recorded on"
+
+' Encounter Type Relationships
+et ||..|| e : "defines"
+priv |o..o{ et : "restricts viewing"
+priv |o..o{ et : "restricts editing"
+
+' Provider Relationships (Many-to-Many)
+e ||..|{ ep : "attended by"
+ep }|..|| prov : "is"
+
+' Clinical Data Relationships
+e ||..o{ obs : "contains observations"
+e ||..o{ ord : "contains orders"
+
+@enduml
